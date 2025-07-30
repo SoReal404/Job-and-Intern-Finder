@@ -1,3 +1,4 @@
+# app.py
 from scraper import get_all_sources
 from matcher import match_internships
 import streamlit as st
@@ -45,13 +46,13 @@ if st.button("🚀 Search & Match"):
         st.warning("⚠️ Please paste your resume or skill keywords.")
     else:
         with st.spinner("🔎 Scraping listings from all sources..."):
-            internships = get_all_sources(final_query, location, serpapi_key, search_type)
+            results_raw = get_all_sources(final_query, location, serpapi_key, search_type)
 
-        if not internships:
+        if not results_raw:
             st.error("❌ No results found. Try a different keyword or check your API key.")
         else:
             with st.spinner("🤖 Matching results to your resume..."):
-                results = match_internships(resume, internships)
+                results = match_internships(resume, results_raw)
 
             st.success(f"✅ Found {len(results)} matched opportunities!")
 
