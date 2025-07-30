@@ -1,28 +1,34 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
-
-# ---------- INTERN SHALA SCRAPER ----------
 from typing import List
 
-def get_all_sources(...):
+# ---------- INTERN SHALA SCRAPER ----------
+
+def get_all_sources(query="machine learning intern", location="Remote", serpapi_key=None) -> List[dict]:
     all_jobs = []
 
     # Internshala
-    try: all_jobs += scrape_internshala(query)
-    except: print("Internshala failed")
+    try:
+        all_jobs += scrape_internshala(query)
+    except Exception as e:
+        print("Internshala failed:", e)
 
     # Google Jobs
     if serpapi_key:
-        try: all_jobs += scrape_google_jobs(query, location, serpapi_key)
-        except: print("Google Jobs failed")
+        try:
+            all_jobs += scrape_google_jobs(query, location, serpapi_key)
+        except Exception as e:
+            print("Google Jobs failed:", e)
 
     # Remotive
-    try: all_jobs += scrape_remotive(query)
-    except: print("Remotive failed")
+    try:
+        all_jobs += scrape_remotive(query)
+    except Exception as e:
+        print("Remotive failed:", e)
 
-    # More coming...
     return all_jobs
+
 
 
 def scrape_internshala(query="machine learning"):
