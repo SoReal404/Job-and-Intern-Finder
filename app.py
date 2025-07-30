@@ -1,41 +1,28 @@
-import streamlit as st
+from scraper import scrape_internshala, scrape_google_jobs
 from matcher import match_internships
+import streamlit as st
 
-st.title("🧠 Internship Finder AI")
-st.write("Automatically match internships based on your resume and skills.")
+st.title("🎯 Internship Finder AI")
 
-# Simulate scraped internships (later from scraper.py)
-internships = [
-    {
-        "title": "AI/ML Intern - Remote",
-        "company": "InnovateAI",
-        "desc": "Work on computer vision tasks using PyTorch and YOLOv5. Collaborate with team to build and evaluate ML models.",
-        "link": "https://example.com/ai-internship"
-    },
-    {
-        "title": "Web Dev Intern",
-        "company": "FrontendMasters",
-        "desc": "Looking for someone skilled in React, HTML/CSS, and JavaScript. No ML experience needed.",
-        "link": "https://example.com/web-dev-internship"
-    },
-    {
-        "title": "Data Science Intern",
-        "company": "DeepData",
-        "desc": "Build data pipelines with Pandas and Scikit-learn. Involves hyperparameter tuning and model evaluation.",
-        "link": "https://example.com/data-science-internship"
-    }
-]
+option = st.selectbox("Select internship source", ["Internshala", "Google Jobs"])
+query = st.text_input("Enter search term (e.g. machine learning)", "machine learning internship")
+resume = st.text_area("Paste your resume or keywords here:", height=250)
 
-resume = st.text_area("Paste your resume or skills here:", height=250)
+if st.button("Search & Match"):
+    with st.spinner("Fetching internships..."):
+        if option == "Internshala":
+            raw_jobs = scrape_internshala(query)
+        else:
+            raw_jobs = scrape_google_jobs(query=query)
 
-if st.button("Match Internships"):
-    if resume.strip() == "":
-        st.warning("Please paste your resume to continue.")
-    else:
-        results = match_internships(resume, internships)
-        for r in results:
-            st.markdown(f"### {r['Title']} @ {r['Company']}")
-            st.markdown(f"**Score:** {r['Score']}")
-            st.markdown(f"{r['Description']}")
-            st.markdown(f"[Apply Here]({r['Link']})")
-            st.markdown("---")
+        if not raw_jobs:
+            st.warning("No internships found.")
+        else:
+            with st.spinner("Ranking matches..."):
+                results = match_internships(resume, raw_jobs)
+                for r in results:
+                    st.markdown(f"### {r['Title']} @ {r['Company']}")
+                    st.markdown(f"**Score:** {r['Score']}")
+                    st.markdown(r["Description"])
+                    st.markdown(f"[Apply Here]({r['Link']})")
+                    st.markdown("---")
