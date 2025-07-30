@@ -30,7 +30,7 @@ def scrape_internshala(query="machine learning"):
 
 # ---------- GOOGLE JOBS via SERPAPI ----------
 def scrape_google_jobs(query="machine learning internship", location="Remote"):
-    api_key = "your_serpapi_api_key"  # ⚠️ Replace this!
+    api_key = "a10476cc1cc9c98784152777c77e55c284ff41a566fcb5cc2099aa92ac017571" 
     params = {
         "engine": "google_jobs",
         "q": query,
