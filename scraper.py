@@ -3,24 +3,25 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote
 from typing import List
 
-# ---------- MASTER SCRAPER FUNCTION ----------
+
+# ---------- MAIN FUNCTION ----------
 def get_all_sources(query="machine learning intern", location="Remote", serpapi_key=None, search_type="Internships") -> List[dict]:
     all_jobs = []
 
-    # Internshala
+    # Internshala (Internships Only)
     try:
         all_jobs += scrape_internshala(query, search_type)
     except Exception as e:
         print("Internshala failed:", e)
 
-    # Google Jobs
+    # Google Jobs via SerpAPI
     if serpapi_key:
         try:
             all_jobs += scrape_google_jobs(query, location, serpapi_key)
         except Exception as e:
             print("Google Jobs failed:", e)
 
-    # Remotive
+    # Remotive (Jobs + Internships)
     try:
         all_jobs += scrape_remotive(query, search_type)
     except Exception as e:
@@ -28,13 +29,13 @@ def get_all_sources(query="machine learning intern", location="Remote", serpapi_
 
     return all_jobs
 
-# ---------- INTERN SHALA SCRAPER ----------
-def scrape_internshala(query="machine learning", search_type="Internships"):
-    url = f"https://internshala.com/internships/keywords-{quote(query)}/"
-    if search_type == "Jobs":
-        # Internshala doesn't post jobs — skip if in job mode
-        return []
 
+# ---------- INTERN SHALA ----------
+def scrape_internshala(query="machine learning", search_type="Internships"):
+    if search_type == "Jobs":
+        return []  # Internshala only supports internships
+
+    url = f"https://internshala.com/internships/keywords-{quote(query)}/"
     headers = {"User-Agent": "Mozilla/5.0"}
     r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -64,7 +65,8 @@ def scrape_internshala(query="machine learning", search_type="Internships"):
 
     return internships
 
-# ---------- GOOGLE JOBS via SERPAPI ----------
+
+# ---------- GOOGLE JOBS ----------
 def scrape_google_jobs(query, location, serpapi_key):
     params = {
         "engine": "google_jobs",
@@ -88,9 +90,10 @@ def scrape_google_jobs(query, location, serpapi_key):
 
     return internships
 
-# ---------- REMOTIVE SCRAPER ----------
+
+# ---------- REMOTIVE.IO ----------
 def scrape_remotive(query="machine learning", search_type="Internships"):
-    filter_term = "intern" if search_type == "Internships" else "junior"
+    filter_terms = ["intern"] if search_type == "Internships" else ["junior", "entry level", "graduate"]
     url = f"https://remotive.io/api/remote-jobs?search={quote(query)}"
     jobs = requests.get(url).json().get("jobs", [])
 
@@ -99,4 +102,4 @@ def scrape_remotive(query="machine learning", search_type="Internships"):
         "company": job["company_name"],
         "desc": job["description"][:400] + "...",
         "link": job["url"]
-    } for job in jobs if filter_term in job["title"].lower()]
+    } for job in jobs if any(term in job["title"].lower() for term in filter_terms)]
