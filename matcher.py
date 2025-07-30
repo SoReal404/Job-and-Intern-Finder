@@ -1,21 +1,33 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer, util
 
-def match_internships(resume_text, internships):
-    corpus = [resume_text] + [job["desc"] for job in internships]
-    vectorizer = TfidfVectorizer(stop_words="english").fit(corpus)
-    resume_vec = vectorizer.transform([resume_text])
-    job_vecs = vectorizer.transform([job["desc"] for job in internships])
+# Load a lightweight and effective model
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
-    scores = cosine_similarity(resume_vec, job_vecs).flatten()
+def match_internships(resume_text, internships, top_k=10):
+    # Embed the resume or skills
+    resume_embedding = model.encode(resume_text, convert_to_tensor=True)
+
+    # Embed all internship descriptions
+    internship_embeddings = model.encode(
+        [intern["desc"] for intern in internships],
+        convert_to_tensor=True
+    )
+
+    # Compute cosine similarities
+    scores = util.pytorch_cos_sim(resume_embedding, internship_embeddings)[0]
+
+    # Add similarity scores to each internship
     results = []
-    for i, job in enumerate(internships):
-        job_copy = job.copy()
-        job_copy["Score"] = round(float(scores[i]), 3)
-        job_copy["Title"] = job.get("title", "No title")
-        job_copy["Company"] = job.get("company", "Unknown")
-        job_copy["Description"] = job.get("desc", "No description")
-        job_copy["Link"] = job.get("link", "#")
-        results.append(job_copy)
+    for i, internship in enumerate(internships):
+        results.append({
+            "Title": internship["title"],
+            "Company": internship["company"],
+            "Description": internship["desc"],
+            "Link": internship["link"],
+            "Score": round(float(scores[i]), 3)
+        })
 
-    return sorted(results, key=lambda x: x["Score"], reverse=True)
+    # Sort by similarity score (descending)
+    results = sorted(results, key=lambda x: x["Score"], reverse=True)
+
+    return results[:top_k]
