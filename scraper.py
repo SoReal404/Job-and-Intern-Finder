@@ -5,23 +5,25 @@ from urllib.parse import quote
 # ---------- INTERN SHALA SCRAPER ----------
 from typing import List
 
-def get_all_sources(query="machine learning intern", location="Remote", serpapi_key=None) -> List[dict]:
+def get_all_sources(...):
     all_jobs = []
 
     # Internshala
-    try:
-        all_jobs += scrape_internshala(query)
-    except Exception as e:
-        print("Internshala error:", e)
+    try: all_jobs += scrape_internshala(query)
+    except: print("Internshala failed")
 
-    # Google Jobs via SerpAPI
+    # Google Jobs
     if serpapi_key:
-        try:
-            all_jobs += scrape_google_jobs(query, location, serpapi_key)
-        except Exception as e:
-            print("Google Jobs error:", e)
+        try: all_jobs += scrape_google_jobs(query, location, serpapi_key)
+        except: print("Google Jobs failed")
 
+    # Remotive
+    try: all_jobs += scrape_remotive(query)
+    except: print("Remotive failed")
+
+    # More coming...
     return all_jobs
+
 
 def scrape_internshala(query="machine learning"):
     url = f"https://internshala.com/internships/keywords-{quote(query)}/"
@@ -80,4 +82,13 @@ def scrape_google_jobs(query, location, serpapi_key):
 
     return internships
 
+def scrape_remotive(query="intern"):
+    url = f"https://remotive.io/api/remote-jobs?search={quote(query)}"
+    jobs = requests.get(url).json().get("jobs", [])
+    return [{
+        "title": job["title"],
+        "company": job["company_name"],
+        "desc": job["description"][:400] + "...",
+        "link": job["url"]
+    } for job in jobs if "intern" in job["title"].lower()]
 
