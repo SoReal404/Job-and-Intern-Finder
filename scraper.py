@@ -96,7 +96,7 @@ def scrape_google_jobs(query, location, serpapi_key):
 
     return internships
 
-def scrape_remotive(query="intern"):
+def scrape_remotive(query="machine learning", job_type="intern"):
     url = f"https://remotive.io/api/remote-jobs?search={quote(query)}"
     jobs = requests.get(url).json().get("jobs", [])
     return [{
@@ -104,5 +104,6 @@ def scrape_remotive(query="intern"):
         "company": job["company_name"],
         "desc": job["description"][:400] + "...",
         "link": job["url"]
-    } for job in jobs if "intern" in job["title"].lower()]
+    } for job in jobs if job_type.lower() in job["title"].lower()]
+
 
