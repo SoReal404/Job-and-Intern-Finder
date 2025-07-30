@@ -32,9 +32,12 @@ def get_all_sources(query="machine learning intern", location="Remote", serpapi_
 
 
 def scrape_internshala(query="machine learning"):
+    from urllib.parse import quote
+    import requests
+    from bs4 import BeautifulSoup
+
     url = f"https://internshala.com/internships/keywords-{quote(query)}/"
     headers = {"User-Agent": "Mozilla/5.0"}
-
     r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
 
@@ -43,26 +46,31 @@ def scrape_internshala(query="machine learning"):
     listings = soup.find_all("div", class_="individual_internship")
 
     for listing in listings[:10]:
-        # Find actual link to the internship
+        # Find actual link
         link_tag = listing.find("a", href=True)
-        relative_link = link_tag["href"] if link_tag else None
-        full_link = "https://internshala.com" + relative_link if relative_link else url
+        relative_link = link_tag["href"] if link_tag else ""
+        full_link = "https://internshala.com" + relative_link
 
-        # Extract title and company cleanly
+        # Clean title
         title_tag = listing.find("div", class_="heading_4_5")
-        company_tag = listing.find("a", class_="link_display_like_text")
+        title = title_tag.text.strip() if title_tag else "No title"
 
-        # Description as backup info
+        # Company name
+        company_tag = listing.find("a", class_="link_display_like_text")
+        company = company_tag.text.strip() if company_tag else "No company"
+
+        # Description or raw fallback
         desc = listing.get_text(separator=" ").strip()
 
         internships.append({
-            "title": title_tag.text.strip() if title_tag else "No title",
-            "company": company_tag.text.strip() if company_tag else "No company",
+            "title": title,
+            "company": company,
             "desc": desc[:400] + "...",
             "link": full_link
         })
 
     return internships
+
 
 # ---------- GOOGLE JOBS via SERPAPI ----------
 def scrape_google_jobs(query, location, serpapi_key):
