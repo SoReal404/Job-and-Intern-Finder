@@ -4,3 +4,4 @@ pandas
 torch
 beautifulsoup4
 requests
+typing
