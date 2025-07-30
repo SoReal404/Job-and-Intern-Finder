@@ -2,4 +2,5 @@ streamlit
 sentence-transformers
 pandas
 torch
-scikit-learn 
+beautifulsoup4
+requests
