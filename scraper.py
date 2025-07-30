@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote
 from typing import List
 
-
 # ---------- MAIN FUNCTION ----------
 def get_all_sources(query="machine learning intern", location="Remote", serpapi_key=None, search_type="Internships") -> List[dict]:
     all_jobs = []
@@ -28,7 +27,6 @@ def get_all_sources(query="machine learning intern", location="Remote", serpapi_
         print("Remotive failed:", e)
 
     return all_jobs
-
 
 # ---------- INTERN SHALA ----------
 def scrape_internshala(query="machine learning", search_type="Internships"):
@@ -65,7 +63,6 @@ def scrape_internshala(query="machine learning", search_type="Internships"):
 
     return internships
 
-
 # ---------- GOOGLE JOBS ----------
 def scrape_google_jobs(query, location, serpapi_key):
     params = {
@@ -90,10 +87,9 @@ def scrape_google_jobs(query, location, serpapi_key):
 
     return internships
 
-
 # ---------- REMOTIVE.IO ----------
 def scrape_remotive(query="machine learning", search_type="Internships"):
-    filter_terms = ["intern"] if search_type == "Internships" else ["junior", "entry level", "graduate"]
+    filter_terms = ["intern"] if search_type == "Internships" else ["junior", "entry level", "engineer", "developer", "analyst"]
     url = f"https://remotive.io/api/remote-jobs?search={quote(query)}"
     jobs = requests.get(url).json().get("jobs", [])
 
