@@ -1,22 +1,21 @@
-from sentence_transformers import SentenceTransformer, util
-import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Load transformer model once
-model = SentenceTransformer("all-MiniLM-L6-v2")
+def match_internships(resume_text, internships):
+    corpus = [resume_text] + [job["desc"] for job in internships]
+    vectorizer = TfidfVectorizer(stop_words="english").fit(corpus)
+    resume_vec = vectorizer.transform([resume_text])
+    job_vecs = vectorizer.transform([job["desc"] for job in internships])
 
-def match_internships(user_resume, internships):
-    profile_emb = model.encode(user_resume, convert_to_tensor=True)
+    scores = cosine_similarity(resume_vec, job_vecs).flatten()
     results = []
-
-    for job in internships:
-        job_emb = model.encode(job['desc'], convert_to_tensor=True)
-        score = util.cos_sim(profile_emb, job_emb).item()
-        results.append({
-            "Title": job["title"],
-            "Company": job["company"],
-            "Description": job["desc"],
-            "Score": round(score, 3),
-            "Link": job["link"]
-        })
+    for i, job in enumerate(internships):
+        job_copy = job.copy()
+        job_copy["Score"] = round(float(scores[i]), 3)
+        job_copy["Title"] = job.get("title", "No title")
+        job_copy["Company"] = job.get("company", "Unknown")
+        job_copy["Description"] = job.get("desc", "No description")
+        job_copy["Link"] = job.get("link", "#")
+        results.append(job_copy)
 
     return sorted(results, key=lambda x: x["Score"], reverse=True)
