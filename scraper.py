@@ -3,14 +3,13 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote
 from typing import List
 
-# ---------- INTERN SHALA SCRAPER ----------
-
-def get_all_sources(query="machine learning intern", location="Remote", serpapi_key=None) -> List[dict]:
+# ---------- MASTER SCRAPER FUNCTION ----------
+def get_all_sources(query="machine learning intern", location="Remote", serpapi_key=None, search_type="Internships") -> List[dict]:
     all_jobs = []
 
     # Internshala
     try:
-        all_jobs += scrape_internshala(query)
+        all_jobs += scrape_internshala(query, search_type)
     except Exception as e:
         print("Internshala failed:", e)
 
@@ -23,43 +22,37 @@ def get_all_sources(query="machine learning intern", location="Remote", serpapi_
 
     # Remotive
     try:
-        all_jobs += scrape_remotive(query)
+        all_jobs += scrape_remotive(query, search_type)
     except Exception as e:
         print("Remotive failed:", e)
 
     return all_jobs
 
-
-
-def scrape_internshala(query="machine learning"):
-    from urllib.parse import quote
-    import requests
-    from bs4 import BeautifulSoup
-
+# ---------- INTERN SHALA SCRAPER ----------
+def scrape_internshala(query="machine learning", search_type="Internships"):
     url = f"https://internshala.com/internships/keywords-{quote(query)}/"
+    if search_type == "Jobs":
+        # Internshala doesn't post jobs — skip if in job mode
+        return []
+
     headers = {"User-Agent": "Mozilla/5.0"}
     r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
 
     internships = []
-
     listings = soup.find_all("div", class_="individual_internship")
 
     for listing in listings[:10]:
-        # Find actual link
         link_tag = listing.find("a", href=True)
         relative_link = link_tag["href"] if link_tag else ""
         full_link = "https://internshala.com" + relative_link
 
-        # Clean title
         title_tag = listing.find("div", class_="heading_4_5")
         title = title_tag.text.strip() if title_tag else "No title"
 
-        # Company name
         company_tag = listing.find("a", class_="link_display_like_text")
         company = company_tag.text.strip() if company_tag else "No company"
 
-        # Description or raw fallback
         desc = listing.get_text(separator=" ").strip()
 
         internships.append({
@@ -70,7 +63,6 @@ def scrape_internshala(query="machine learning"):
         })
 
     return internships
-
 
 # ---------- GOOGLE JOBS via SERPAPI ----------
 def scrape_google_jobs(query, location, serpapi_key):
@@ -96,14 +88,15 @@ def scrape_google_jobs(query, location, serpapi_key):
 
     return internships
 
-def scrape_remotive(query="machine learning", job_type="intern"):
+# ---------- REMOTIVE SCRAPER ----------
+def scrape_remotive(query="machine learning", search_type="Internships"):
+    filter_term = "intern" if search_type == "Internships" else "junior"
     url = f"https://remotive.io/api/remote-jobs?search={quote(query)}"
     jobs = requests.get(url).json().get("jobs", [])
+
     return [{
         "title": job["title"],
         "company": job["company_name"],
         "desc": job["description"][:400] + "...",
         "link": job["url"]
-    } for job in jobs if job_type.lower() in job["title"].lower()]
-
-
+    } for job in jobs if filter_term in job["title"].lower()]
