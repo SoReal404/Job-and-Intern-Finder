@@ -1,25 +1,27 @@
-from scraper import scrape_internshala, scrape_google_jobs
+from scraper import get_all_sources
 from matcher import match_internships
 import streamlit as st
 
-st.title("🎯 Internship Finder AI")
+st.title("🤖 Internship Finder AI")
 
-option = st.selectbox("Select internship source", ["Internshala", "Google Jobs"])
-query = st.text_input("Enter search term (e.g. machine learning)", "machine learning internship")
-resume = st.text_area("Paste your resume or keywords here:", height=250)
+query = st.text_input("Search keywords", "machine learning intern")
+location = st.text_input("Location (optional)", "Remote")
+serpapi_key = st.text_input("SerpAPI Key (optional)", type="password")
 
-if st.button("Search & Match"):
-    with st.spinner("Fetching internships..."):
-        if option == "Internshala":
-            raw_jobs = scrape_internshala(query)
+resume = st.text_area("Paste your resume/skills", height=250)
+
+if st.button("🔍 Search All Sources & Match"):
+    if not resume.strip():
+        st.warning("Paste your resume to continue.")
+    else:
+        with st.spinner("Collecting internships..."):
+            internships = get_all_sources(query, location, serpapi_key)
+
+        if not internships:
+            st.error("No internships found. Try different keywords or check your API key.")
         else:
-            raw_jobs = scrape_google_jobs(query=query)
-
-        if not raw_jobs:
-            st.warning("No internships found.")
-        else:
-            with st.spinner("Ranking matches..."):
-                results = match_internships(resume, raw_jobs)
+            with st.spinner("Matching to your profile..."):
+                results = match_internships(resume, internships)
                 for r in results:
                     st.markdown(f"### {r['Title']} @ {r['Company']}")
                     st.markdown(f"**Score:** {r['Score']}")
