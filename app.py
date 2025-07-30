@@ -3,6 +3,8 @@ from matcher import match_internships
 import streamlit as st
 import pandas as pd
 
+search_type = st.radio("🎯 What are you looking for?", ["Internships", "Jobs"])
+
 st.set_page_config(page_title="Internship Finder AI", layout="wide")
 st.title("🎯 Internship Finder AI")
 st.markdown("Find the most relevant internships from **multiple sources** using AI and NLP.")
@@ -15,6 +17,9 @@ predefined_roles = [
 query = st.selectbox("🔍 Internship Role", predefined_roles)
 custom_query = st.text_input("✏️ Or enter a custom role")
 final_query = custom_query if custom_query else query
+if search_type == "Jobs":
+    final_query = final_query.replace("Intern", "").strip()
+
 
 # --- Location Selection ---
 location = st.selectbox("📍 Preferred Location", [
@@ -33,7 +38,7 @@ if st.button("🚀 Search & Match"):
         st.warning("⚠️ Please paste your resume or skills first.")
     else:
         with st.spinner("🔄 Gathering internships from all sources..."):
-            internships = get_all_sources(final_query, location, serpapi_key)
+            internships = get_all_sources(final_query, location, serpapi_key, search_type)
 
         if not internships:
             st.error("❌ No internships found. Try changing keywords or checking your API key.")
